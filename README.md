@@ -1,6 +1,6 @@
 # SimpleConfig
 
-Remove boilerplate code for using SharePreference to persist app's testConfig data, Inspire by [retrofit](https://github.com/square/retrofit)
+Remove boilerplate code for using SharePreference to persist app's config data, Inspire by [retrofit](https://github.com/square/retrofit)
 
 # License
 
