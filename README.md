@@ -87,7 +87,7 @@ Config interface contains two type of method，**Method to get value** 和 **Met
 
 Here Annotations can use
 
-Annotation | Target                 | 作用                                                                                  | Note
+Annotation | Target                 | Function                                                                            | Note
 :--------- | :--------------------- | :---------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------
 @CONFIG    | Config interface       | Specified the name of config                                                        | If not set，Interface name will be consider as name of config
 @GET       | Method to get value    | Specified the key be used to retrieve value from config                             | If not set and the method start with "get"，such as "getHelloInt" ，"HelloInt" will be consider as the key
