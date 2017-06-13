@@ -39,7 +39,7 @@ class ServiceMethod implements ConfigMethod {
         }
         COMMIT commit = method.getAnnotation(COMMIT.class);
         if (commit != null) {
-            mProxy = new ComfitMethod(method, commit);
+            mProxy = new CommitMethod(method, commit);
             return;
         }
         // Libs also support the method which with get/apply/commit prefix
@@ -63,7 +63,7 @@ class ServiceMethod implements ConfigMethod {
                 if (TextUtils.isEmpty(key)) {
                     methodNameError(methodName);
                 }
-                mProxy = new ComfitMethod(method, key);
+                mProxy = new CommitMethod(method, key);
             }
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "parseMethod without annotation: methodName:" + methodName + ",key:" + key);
@@ -201,7 +201,7 @@ class ServiceMethod implements ConfigMethod {
     /**
      * Take responsibility for commit change to SharePreference
      */
-    private class ComfitMethod implements ConfigMethod {
+    private class CommitMethod implements ConfigMethod {
         private final Method mRawMethod;
         private String mKey;
         @SupportType
@@ -209,11 +209,11 @@ class ServiceMethod implements ConfigMethod {
         int mParamType;
         private boolean mDoReturn;
 
-        public ComfitMethod(Method method, COMMIT commit) {
+        public CommitMethod(Method method, COMMIT commit) {
             this(method, commit.key());
         }
 
-        public ComfitMethod(Method method, String key) {
+        public CommitMethod(Method method, String key) {
             mRawMethod = method;
             mKey = key;
             Type[] parameterTypes = mRawMethod.getGenericParameterTypes();
