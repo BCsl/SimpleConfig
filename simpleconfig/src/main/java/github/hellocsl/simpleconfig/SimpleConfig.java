@@ -1,13 +1,14 @@
 package github.hellocsl.simpleconfig;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import github.hellocsl.simpleconfig.annotation.CONFIG;
 
@@ -15,24 +16,23 @@ import github.hellocsl.simpleconfig.annotation.CONFIG;
  * Created by chensuilun on 2017/6/12.
  */
 public class SimpleConfig {
-    public static final String DEFAULT_CONFIG = "SimpleConfig";
-    private Context mContext;
-    private String mConfigName = DEFAULT_CONFIG;
-    private int mConfigMode = Context.MODE_PRIVATE;
-    private SharedPreferences mSharedPreferences;
+    private static final int DEFAULT_MODE = Context.MODE_PRIVATE;
 
-    public SimpleConfig(Context context) {
+    private Context mContext;
+
+    private Config.Factory mConfigFactory;
+
+    private final Map<Method, ServiceMethod> mServiceMethodCache = new ConcurrentHashMap<Method, ServiceMethod>();
+
+    private final Map<Class, Config> mConfigsCache = new ConcurrentHashMap<Class, Config>();
+
+    private SimpleConfig(Context context, Config.Factory factory) {
         mContext = context;
+        mConfigFactory = factory;
     }
 
     public <T> T create(final Class<T> service) {
         Utils.validateServiceInterface(service);
-        // TODO: 2017/6/12 cache
-        CONFIG config = service.getAnnotation(CONFIG.class);
-        if (config != null) {
-            mConfigMode = config.mode();
-            mConfigName = config.name();
-        }
         return (T) Proxy.newProxyInstance(service.getClassLoader(), new Class<?>[]{service},
                 new InvocationHandler() {
 
@@ -43,33 +43,39 @@ public class SimpleConfig {
                         if (method.getDeclaringClass() == Object.class) {
                             return method.invoke(this, args);
                         }
-                        ServiceMethod serviceMethod = loadServiceMethod(method);
+                        ServiceMethod serviceMethod = loadServiceMethod(service, method);
                         return serviceMethod.invoke(args);
                     }
                 });
     }
 
-    private ServiceMethod loadServiceMethod(Method method) {
-        // TODO: 2017/6/12 cache
-        return new ServiceMethod(getConfig(), method);
-    }
-
-
-    public String getConfigName() {
-        return mConfigName;
-    }
-
-    public int getConfigMode() {
-        return mConfigMode;
-    }
-
-    // TODO: 2017/6/12 移除在 SimpleConfig 记录的 config 配置信息
-    public SharedPreferences getConfig() {
-        if (mSharedPreferences == null) {
-            mSharedPreferences = mContext.getSharedPreferences(mConfigName, mConfigMode);
+    private ServiceMethod loadServiceMethod(Class service, Method method) {
+        ServiceMethod serviceMethod;
+        serviceMethod = mServiceMethodCache.get(method);
+        if (serviceMethod == null) {
+            serviceMethod = new ServiceMethod(loadConfigs(service), method);
+            mServiceMethodCache.put(method, serviceMethod);
         }
-        return mSharedPreferences;
+        return serviceMethod;
     }
+
+    public Config loadConfigs(Class service) {
+        Utils.validateServiceInterface(service);
+        Config config = mConfigsCache.get(service);
+        if (config == null) {
+            String name = service.getSimpleName();
+            int mode = DEFAULT_MODE;
+            CONFIG configAnno = (CONFIG) service.getAnnotation(CONFIG.class);
+            if (configAnno != null) {
+                name = configAnno.name();
+                mode = configAnno.mode();
+            }
+            config = mConfigFactory.newConfig(mContext, name, mode);
+            mConfigsCache.put(service, config);
+        }
+        return config;
+    }
+
 
     /**
      * @param type
@@ -97,5 +103,31 @@ public class SimpleConfig {
             }
         }
         return false;
+    }
+
+    /**
+     * Build a new {@link SimpleConfig}.
+     */
+    public static class Builder {
+        private Context mContext;
+
+        private Config.Factory mFactory;
+
+        public Builder(Context context) {
+            mContext = context;
+        }
+
+        public Builder configFactory(Config.Factory factory) {
+            mFactory = factory;
+            return this;
+        }
+
+        public SimpleConfig build() {
+            Config.Factory factory = mFactory;
+            if (factory == null) {
+                factory = new DefaultConfigFactory();
+            }
+            return new SimpleConfig(mContext, factory);
+        }
     }
 }

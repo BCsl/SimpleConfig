@@ -1,6 +1,7 @@
 package github.hellocsl.simpleconfig;
 
-import android.content.SharedPreferences;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -15,12 +16,13 @@ import github.hellocsl.simpleconfig.annotation.GET;
  * Created by chensuilun on 2017/6/12.
  */
 class ServiceMethod implements ConfigMethod {
-    private SharedPreferences mPreferences;
+    private static final String TAG = "ServiceMethod";
+    private Config mConfig;
 
     private ConfigMethod mProxy;
 
-    public ServiceMethod(SharedPreferences preferences, Method method) {
-        mPreferences = preferences;
+    public ServiceMethod(Config config, Method method) {
+        mConfig = config;
         parseMethod(method);
     }
 
@@ -40,10 +42,46 @@ class ServiceMethod implements ConfigMethod {
             mProxy = new ComfitMethod(method, commit);
             return;
         }
+        // Libs also support the method which with get/apply/commit prefix
+        String methodName = method.getName();
+        String key = null;
+        if (!TextUtils.isEmpty(methodName)) {
+            if (methodName.startsWith(BASE_GET_PREFIX)) {
+                key = methodName.substring(BASE_GET_PREFIX.length());
+                if (TextUtils.isEmpty(key)) {
+                    methodNameError(methodName);
+                }
+                mProxy = new GetMethod(method, key);
+            } else if (methodName.startsWith(BASE_APPLY_PREFIX)) {
+                key = methodName.substring(BASE_APPLY_PREFIX.length());
+                if (TextUtils.isEmpty(key)) {
+                    methodNameError(methodName);
+                }
+                mProxy = new ApplyMethod(method, key);
+            } else if (methodName.startsWith(BASE_COMMIT_PREFIX)) {
+                key = methodName.substring(BASE_COMMIT_PREFIX.length());
+                if (TextUtils.isEmpty(key)) {
+                    methodNameError(methodName);
+                }
+                mProxy = new ComfitMethod(method, key);
+            }
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "parseMethod without annotation: methodName:" + methodName + ",key:" + key);
+            }
+        }
     }
 
+    private void methodNameError(String methodName) {
+        throw new IllegalStateException("Service Method without both annotation and valid name,method name:" + methodName);
+    }
+
+
     public Object invoke(Object[] args) {
-        return mProxy.invoke(args);
+        if (mProxy != null) {
+            return mProxy.invoke(args);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -52,15 +90,17 @@ class ServiceMethod implements ConfigMethod {
     private class GetMethod implements ConfigMethod {
         private Method mRawMethod;
         private String mKey;
-        private GET mGET;
         private Type mReturnType;
         @SupportType
         private int mReturnParamType;
 
         public GetMethod(Method method, GET get) {
+            this(method, get.key());
+        }
+
+        public GetMethod(Method method, String key) {
             mRawMethod = method;
-            mGET = get;
-            mKey = mGET.key();
+            mKey = key;
             Type returnType = mRawMethod.getGenericReturnType();
             mReturnType = returnType;
             mReturnParamType = getMethodType(mReturnType);
@@ -72,21 +112,20 @@ class ServiceMethod implements ConfigMethod {
             if (args != null && args.length > 1) {
                 throw new IllegalArgumentException("GetMethod supports at most 1 argument");
             }
-            SharedPreferences preferences = mPreferences;
             boolean hasDefault = args != null && args.length == 1;
             switch (mReturnParamType) {
                 case TYPE_INT:
-                    return preferences.getInt(mKey, hasDefault ? (Integer) args[0] : -1);
+                    return mConfig.getInt(mKey, hasDefault ? (Integer) args[0] : -1);
                 case TYPE_LONG:
-                    return preferences.getLong(mKey, hasDefault ? (Long) args[0] : -1L);
+                    return mConfig.getLong(mKey, hasDefault ? (Long) args[0] : -1L);
                 case TYPE_BOOLEAN:
-                    return preferences.getBoolean(mKey, hasDefault ? (Boolean) args[0] : false);
+                    return mConfig.getBoolean(mKey, hasDefault ? (Boolean) args[0] : false);
                 case TYPE_FLOAT:
-                    return preferences.getFloat(mKey, hasDefault ? (Float) args[0] : 0);
+                    return mConfig.getFloat(mKey, hasDefault ? (Float) args[0] : 0);
                 case TYPE_STRING:
-                    return preferences.getString(mKey, hasDefault ? (String) args[0] : null);
+                    return mConfig.getString(mKey, hasDefault ? (String) args[0] : null);
                 case TYPE_SET:
-                    return preferences.getStringSet(mKey, hasDefault ? (Set<String>) args[0] : null);
+                    return mConfig.getStringSet(mKey, hasDefault ? (Set<String>) args[0] : null);
                 default:
                     return new IllegalStateException("UnKnow SupportType of:" + mReturnType);
             }
@@ -98,7 +137,6 @@ class ServiceMethod implements ConfigMethod {
      */
     private class ApplyMethod implements ConfigMethod {
         private final Method mRawMethod;
-        private APPLY mApply;
         private String mKey;
         @SupportType
         private
@@ -106,9 +144,12 @@ class ServiceMethod implements ConfigMethod {
         private boolean mDoReturn;
 
         public ApplyMethod(Method method, APPLY apply) {
+            this(method, apply.key());
+        }
+
+        public ApplyMethod(Method method, String key) {
             mRawMethod = method;
-            mApply = apply;
-            mKey = mApply.key();
+            mKey = key;
             Type[] parameterTypes = mRawMethod.getGenericParameterTypes();
             if (parameterTypes.length != 1) {
                 throw new IllegalArgumentException("ApplyMethod must only has 1 argument");
@@ -131,25 +172,24 @@ class ServiceMethod implements ConfigMethod {
             if (args == null || args.length != 1) {
                 throw new IllegalArgumentException("ApplyMethod must only has 1 argument");
             }
-            SharedPreferences.Editor editor = mPreferences.edit();
             switch (mParamType) {
                 case TYPE_INT:
-                    editor.putInt(mKey, (Integer) args[0]).apply();
+                    mConfig.putInt(mKey, (Integer) args[0], true);
                     break;
                 case TYPE_LONG:
-                    editor.putLong(mKey, (Long) args[0]).apply();
+                    mConfig.putLong(mKey, (Long) args[0], true);
                     break;
                 case TYPE_BOOLEAN:
-                    editor.putBoolean(mKey, (Boolean) args[0]).apply();
+                    mConfig.putBoolean(mKey, (Boolean) args[0], true);
                     break;
                 case TYPE_FLOAT:
-                    editor.putFloat(mKey, (Float) args[0]).apply();
+                    mConfig.putFloat(mKey, (Float) args[0], true);
                     break;
                 case TYPE_STRING:
-                    editor.putString(mKey, (String) args[0]).apply();
+                    mConfig.putString(mKey, (String) args[0], true);
                     break;
                 case TYPE_SET:
-                    editor.putStringSet(mKey, (Set<String>) args[0]).apply();
+                    mConfig.putStringSet(mKey, (Set<String>) args[0], true);
                     break;
                 default:
                     return new IllegalStateException("UnKnow SupportType of:" + mParamType);
@@ -163,7 +203,6 @@ class ServiceMethod implements ConfigMethod {
      */
     private class ComfitMethod implements ConfigMethod {
         private final Method mRawMethod;
-        private COMMIT mCommit;
         private String mKey;
         @SupportType
         private
@@ -171,9 +210,12 @@ class ServiceMethod implements ConfigMethod {
         private boolean mDoReturn;
 
         public ComfitMethod(Method method, COMMIT commit) {
+            this(method, commit.key());
+        }
+
+        public ComfitMethod(Method method, String key) {
             mRawMethod = method;
-            mCommit = commit;
-            mKey = mCommit.key();
+            mKey = key;
             Type[] parameterTypes = mRawMethod.getGenericParameterTypes();
             if (parameterTypes.length != 1) {
                 throw new IllegalArgumentException("CommitMethod must only has 1 argument");
@@ -196,32 +238,32 @@ class ServiceMethod implements ConfigMethod {
             if (args == null || args.length != 1) {
                 throw new IllegalArgumentException("CommitMethod must only has 1 argument");
             }
-            SharedPreferences.Editor editor = mPreferences.edit();
             Object result;
             switch (mParamType) {
                 case TYPE_INT:
-                    result = editor.putInt(mKey, (Integer) args[0]).commit();
+                    result = mConfig.putInt(mKey, (Integer) args[0], false);
                     break;
                 case TYPE_LONG:
-                    result = editor.putLong(mKey, (Long) args[0]).commit();
+                    result = mConfig.putLong(mKey, (Long) args[0], false);
                     break;
                 case TYPE_BOOLEAN:
-                    result = editor.putBoolean(mKey, (Boolean) args[0]).commit();
+                    result = mConfig.putBoolean(mKey, (Boolean) args[0], false);
                     break;
                 case TYPE_FLOAT:
-                    result = editor.putFloat(mKey, (Float) args[0]).commit();
+                    result = mConfig.putFloat(mKey, (Float) args[0], false);
                     break;
                 case TYPE_STRING:
-                    result = editor.putString(mKey, (String) args[0]).commit();
+                    result = mConfig.putString(mKey, (String) args[0], false);
                     break;
                 case TYPE_SET:
-                    result = editor.putStringSet(mKey, (Set<String>) args[0]).commit();
+                    result = mConfig.putStringSet(mKey, (Set<String>) args[0], false);
                     break;
                 default:
                     return new IllegalStateException("UnKnow SupportType of:" + mParamType);
             }
             return mDoReturn ? result : null;
         }
+
     }
 
     public

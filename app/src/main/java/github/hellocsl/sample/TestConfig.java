@@ -10,14 +10,14 @@ import github.hellocsl.simpleconfig.annotation.GET;
 /**
  * Created by chensuilun on 2017/6/12.
  */
-@CONFIG(name = "simple")
-public interface Config {
-    String TEST_KEY_INT = "Hello_Int";
-    String TEST_KEY_LONG = "Hello_Long";
-    String TEST_KEY_FLOAT = "Hello_Float";
-    String TEST_KEY_BOOLEAN = "Hello_Boolean";
-    String TEST_KEY_STRING = "Hello_String";
-    String TEST_KEY_SET = "Hello_Set";
+@CONFIG(name = "Simple")
+public interface TestConfig {
+    String TEST_KEY_INT = "HELLO_INT";
+    String TEST_KEY_LONG = "HELLO_LONG";
+    String TEST_KEY_FLOAT = "HELLO_FLOAT";
+    String TEST_KEY_BOOLEAN = "HELLO_BOOLEAN";
+    String TEST_KEY_STRING = "HELLO_STRING";
+    String TEST_KEY_SET = "HELLO_SET";
 
 
     @GET(key = TEST_KEY_INT)

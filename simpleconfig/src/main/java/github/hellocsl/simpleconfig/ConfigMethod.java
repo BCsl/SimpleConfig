@@ -6,6 +6,9 @@ import android.support.annotation.IntDef;
  * Created by chensuilun on 2017/6/12.
  */
 public interface ConfigMethod {
+    String BASE_GET_PREFIX = "get";
+    String BASE_APPLY_PREFIX = "apply";
+    String BASE_COMMIT_PREFIX = "commit";
 
     int TYPE_INT = 0;
     int TYPE_LONG = 1;
