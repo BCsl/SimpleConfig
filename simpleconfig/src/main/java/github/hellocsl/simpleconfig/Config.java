@@ -35,7 +35,7 @@ public interface Config {
 
 
     /**
-     * Set a Set<String> value in the config
+     * Set a set of String value in the config
      *
      * @param key    The name of the config to modify.
      * @param values The new value for the config.
