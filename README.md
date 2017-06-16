@@ -12,9 +12,9 @@ compile 'github.hellocsl:simpleconfig:{lastest-version}'
 
 ## Usage
 
-### Step1 Define your config interface
+### **Step1** Define your config interface
 
-[Config Interface](https://github.com/BCsl/SimpleConfig/blob/master/app/src/main/java/github/hellocsl/sample/TestConfig.java)
+[Config Interface](https://github.com/BCsl/SimpleConfig/blob/master/app/src/main/java/github/hellocsl/sample/TestConfig.java)，**Recommended**
 
 ```java
 @CONFIG(name = "Simple")
@@ -37,7 +37,7 @@ public interface TestConfig {
 }
 ```
 
-Other way to define your [Config Interface](https://github.com/BCsl/SimpleConfig/blob/master/app/src/main/java/github/hellocsl/sample/NoAnnotationConfig.java)
+Other way to define your [Config Interface](https://github.com/BCsl/SimpleConfig/blob/master/app/src/main/java/github/hellocsl/sample/NoAnnotationConfig.java)，**(Be careful of ProGuard)**
 
 ```java
 //config name will be NoAnnotationConfig
@@ -108,7 +108,13 @@ mSimpleConfig = new SimpleConfig.Builder(mAppContext).configFactory(new Config.F
  }).build();
 ```
 
+## DEMO
+
+Unit Test is provided. [TestConfigTest](https://github.com/BCsl/SimpleConfig/blob/master/app/src/androidTest/java/github/hellocsl/sample/TestConfigTest.java) & [NoAnnotationConfigTest](https://github.com/BCsl/SimpleConfig/blob/master/app/src/androidTest/java/github/hellocsl/sample/NoAnnotationConfigTest.java)
+
 ## ProGuard
+
+Since ProGuard may confuse your Config Interface , so define your Config Interface with annotations is recommended
 
 # License
 

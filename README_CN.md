@@ -10,9 +10,9 @@ compile 'github.hellocsl:simpleconfig:{lastest-version}'
 
 ## 使用
 
-### Step1 定义配置接口
+### **Step1** 定义配置接口
 
-[定义配置接口](https://github.com/BCsl/SimpleConfig/blob/master/app/src/main/java/github/hellocsl/sample/TestConfig.java)
+[定义配置接口（推荐）](https://github.com/BCsl/SimpleConfig/blob/master/app/src/main/java/github/hellocsl/sample/TestConfig.java)
 
 ```java
 @CONFIG(name = "Simple")
@@ -35,7 +35,7 @@ public interface TestConfig {
 }
 ```
 
-还可以这样定义[配置接口](https://github.com/BCsl/SimpleConfig/blob/master/app/src/main/java/github/hellocsl/sample/NoAnnotationConfig.java)
+还可以这样定义[配置接口（需要注意方法混淆！不推荐使用）](https://github.com/BCsl/SimpleConfig/blob/master/app/src/main/java/github/hellocsl/sample/NoAnnotationConfig.java)
 
 ```java
 //配置名为接口名 NoAnnotationConfig
@@ -56,7 +56,7 @@ public interface NoAnnotationConfig {
 
 > 因为是基于 `SharePreference` 所以仅支持 `int|Integer`、`long|Long`、`float|Float`、`boolean|Boolean`、`String`、`Set<String>` 这几种类型
 
-### Step2 使用 SimpleConfig 对象来解析配置接口
+### **Step2** 使用 SimpleConfig 对象来解析配置接口
 
 使用 `SimpleConfig.Builder` 来构建一个 `SimpleConfig` 对象，然后调用 `SimpleConfig#create` 方法来对配置接口进行解析并返回一个实现配置接口的动态代理对象，然后就可以直接用该接口来实现配置的读取和更新
 
@@ -102,7 +102,13 @@ mSimpleConfig = new SimpleConfig.Builder(mAppContext).configFactory(new Config.F
  }).build();
 ```
 
+## DEMO
+
+可以直接看单元测试例子，[TestConfigTest](https://github.com/BCsl/SimpleConfig/blob/master/app/src/androidTest/java/github/hellocsl/sample/TestConfigTest.java) 和 [NoAnnotationConfigTest](https://github.com/BCsl/SimpleConfig/blob/master/app/src/androidTest/java/github/hellocsl/sample/NoAnnotationConfigTest.java)
+
 ## 混淆
+
+配置接口推荐使用注解的方式来定义，否则通过方法名的前缀 `get` 等来判断，在混淆后一般会失效，请注意
 
 # 开源协议
 
