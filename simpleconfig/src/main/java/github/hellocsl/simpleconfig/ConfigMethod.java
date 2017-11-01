@@ -2,6 +2,9 @@ package github.hellocsl.simpleconfig;
 
 import android.support.annotation.IntDef;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * Created by chensuilun on 2017/6/12.
  */
@@ -21,6 +24,7 @@ public interface ConfigMethod {
     Object invoke(Object[] args);
 
     @IntDef({TYPE_INT, TYPE_LONG, TYPE_BOOLEAN, TYPE_FLOAT, TYPE_STRING, TYPE_SET})
+    @Retention(RetentionPolicy.SOURCE)
     @interface SupportType {
     }
 }

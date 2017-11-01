@@ -1,5 +1,7 @@
 # SimpleConfig
 
+[![API](https://img.shields.io/badge/API-14%2B-brightgreen.svg?style=flat-square)](https://android-arsenal.com/api?level=14)
+
 Remove boilerplate code for using SharePreference to persist app's config data, Inspire by [retrofit](https://github.com/square/retrofit)
 
 [中文版本戳这里](./README_CN.md)

@@ -1,5 +1,7 @@
 # SimpleConfig
 
+[![API](https://img.shields.io/badge/API-14%2B-brightgreen.svg?style=flat-square)](https://android-arsenal.com/api?level=14)
+
 这是一个基于 `SharePreference` 简化应用配置信息读取和保存的库, 灵感来自于 [retrofit](https://github.com/square/retrofit)
 
 ## Gradle
